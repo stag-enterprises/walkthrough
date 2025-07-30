@@ -3,6 +3,7 @@
 `fish-walkthrough` is a [Fish shell](https://fishshell.com/) plugin to make
 running shell scripts, that might go wrong, easy!
 
+
 ## Why?
 
 I used to have a collection of shell scripts for sysadmin. However, often,
@@ -10,8 +11,8 @@ something would go wrong in the middle of the script, and I'd have to manually
 copy-paste each command from the script, and possibly adding other commands in
 between.
 
-With `fish-walkthrough`, the process of copy-pasting is automated (or moreso),
-and applying interventions is easy.
+With `fish-walkthrough`, the process of copy-pasting is automated, and applying
+interventions is easy.
 
 ## Installation
 
@@ -21,7 +22,12 @@ The entire plugin consists of three files:
 - `completions/walkthrough.fish`: autocomplete for the command
 - `conf.d/walkthrough-binds.fish`: default keybindings for the command (optional)
 
-To install, just make sure they end up in your Fish config directory.
+To install, just make sure they end up in your Fish config directory. For
+example, with Fisher:
+
+```shell
+fisher install stag-enterprises/walkthrough
+```
 
 ## Usage
 
@@ -36,6 +42,7 @@ To install, just make sure they end up in your Fish config directory.
 - Reset: `walktrough -r (or --reset)`
 - Get the current script: `walkthrough -w (or --which)`
 - Get the current command number: `walkthrough -e (or --where)`
+- Autopilot (run until exit code 1): `walkthrough -p`
 
 ## Keybinds
 

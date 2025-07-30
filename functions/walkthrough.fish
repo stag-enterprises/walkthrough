@@ -27,24 +27,19 @@ function __walkthrough_abspath -d "Normalize and absolute a path" -a path
 end
 
 function walkthrough -d "Walkthrough a script"
-    set -l 0 __walkthrough_
-    set -e _flag_help _flag_next _flag_back _flag_again
-    argparse -x next,back,again,goto,which,where,reset,goto,list,select \
-        h/help n/next b/back a/again w/which e/where r/reset g/goto l/list s/select \
-        -- $argv 2>/dev/null
-    or begin
-        __walkthrough_log err "invalid argument!"
-        return
-    end
+    set -e _flag_help _flag_next _flag_back _flag_again _flag_which _flag_where _flag_reset _flag_goto _flag_list _flag_select _flag_autopilot
+    argparse -x next,back,again,goto,which,where,reset,goto,list,select,autopilot \
+        h/help n/next b/back a/again w/which e/where r/reset g/goto l/list s/select p/autopilot \
+        -- $argv
 
     if set -q _flag_help
         echo walkthrough script.sh
-        echo walkthrough [-hawerlsj]
+        echo walkthrough [-hawerlsp]
         echo walkthrough [-nbg] [amount]
         echo
         echo -h,--help
         echo -w,--which -e,--where
-        echo -l,--list -s,--select -j,--jump -r,--reset
+        echo -l,--list -s,--select -p,--autopilot,--reset
         echo -n,--next -b,--back -a,--again -g,--goto
         return
     end
@@ -54,8 +49,8 @@ function walkthrough -d "Walkthrough a script"
     else if set -q _flag_where
         echo $__walkthrough_line
     else if set -q _flag_reset
-        set -g __walkthrough_line 0
-        __walkthrough_log ok "set line to 0"
+        set -g __walkthrough_line 1
+        __walkthrough_log ok "set line to 1"
     else if set -q _flag_goto
         set -g __walkthrough_line $argv[1]
         __walkthrough_log ok "set line to $argv[1]"
@@ -73,6 +68,29 @@ function walkthrough -d "Walkthrough a script"
             --line-range=$start:$end \
             --highlight-line=$__walkthrough_line \
             --style=-grid
+    else if set -q _flag_autopilot
+        if [ $__walkthrough_line -le 1 ]
+            set -g __walkthrough_line 1
+        end
+        __walkthrough_log info "autopilot starting on line $__walkthrough_line"
+        while set -g line (sed -n "$__walkthrough_line p" "$__walkthrough_script")
+            if not [ -z "$(string trim $line)" ]
+                if eval "$line"
+                    __walkthrough_log ok "autopilot: $line"
+                else
+                    __walkthrough_log err "autopilot: $line"
+                    break
+                end
+            end
+            set -g __walkthrough_line (math $__walkthrough_line + 1)
+            if [ $__walkthrough_line -ge $__walkthrough_maxlines ]
+                set -g __walkthrough_line $__walkthrough_maxlines
+                __walkthrough_log info "autopilot: reached end of script"
+                break
+            end
+        end
+        set -g __walkthrough_line (math $__walkthrough_line - 1)
+        __walkthrough_log info "autopilot finished on line $__walkthrough_line"
     else if set -q _flag_select
         if ! command -v fzf >/dev/null
             __walkthrough_log err "fzf is not installed or not in path"
@@ -112,7 +130,7 @@ function walkthrough -d "Walkthrough a script"
     else if set -q argv[1]
         set -g __walkthrough_script (__walkthrough_abspath $argv[1])
         set -g __walkthrough_maxlines (wc -l <$__walkthrough_script)
-        set -g __walkthrough_line 0
+        set -g __walkthrough_line 1
         if not [ -f $__walkthrough_script ]
             __walkthrough_log err "no such file $argv[1]"
             return
